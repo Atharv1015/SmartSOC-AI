@@ -34,3 +34,8 @@ For this change, the external VM components and documentation are placed in dedi
 ## Source-of-truth and deployment distinction
 
 The files in `components/` are repository-managed copies from the supplied lab source. Adding or editing a file in the Git repository does not deploy it to Ubuntu or the victim Windows VM. The existing launch scripts still target the paths described in each component README. Synchronize deployment copies deliberately and test any launcher changes separately.
+
+
+## Component deployment guides
+
+The two folders under `components/` contain the source copies and step-by-step instructions. Deployment is a separate operation: publishing or cloning the repository does not install the code on the Ubuntu or victim VM. Review `docs/DEPLOYMENT_GUIDE.md` and each component README before running them.

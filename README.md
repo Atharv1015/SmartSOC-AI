@@ -131,7 +131,7 @@ Multiple v1/v2 and candidate/historical modules coexist. Do not assume similarly
 
 ### 3. Defensive enforcement — Windows victim
 
-The supplied defensive-agent file is versioned at `components/windows-defensive-agent/smartsoc_defensive_agent_v3.py`. The running VM may still use `C:\SmartSOC-Agent-v2\smartsoc_defensive_agent_v2.py`; the repository copy does not change that deployed path. The file describes a narrowly scoped endpoint service:
+The supplied defensive-agent file is versioned at `components/windows-defensive-agent/smartsoc_defensive_agent_v2.py`. The running VM may still use `C:\SmartSOC-Agent-v2\smartsoc_defensive_agent_v2.py`; the repository copy does not change that deployed path. The file describes a narrowly scoped endpoint service:
 
 - Routes: `GET /health` and `POST /mitigate`.
 - Supported action: `PROCESS_TERMINATION` only.
@@ -180,7 +180,7 @@ The repository is organized into stable, purpose-specific areas:
 
 - **`src/`** — SmartSOC inference, risk, decision, integration, and response-adapter code.
 - **`components/ubuntu-forwarder/`** — the supplied Ubuntu Wazuh Forwarder v3 source and its deployment notes.
-- **`components/windows-defensive-agent/`** — the supplied Windows defensive-agent v3 source and its deployment notes.
+- **`components/windows-defensive-agent/`** — the supplied Windows defensive-agent source (filename v2; internal agent version v3) and its deployment notes.
 - **`tests/`** — maintained component/integration tests. Root-level `test_*.py` files are retained for now because some legacy scripts may depend on project-root-relative paths.
 - **`tools/`** — launchers, diagnostics, demo workflows, and utilities. Historical top-level patch scripts are intentionally left in place during this pass because several resolve project paths relative to their own location; moving them without refactoring and testing their path handling could break their behavior.
 - **`data/`** — selected event samples and manifest metadata. Large datasets and model binaries are excluded by `.gitignore`.
@@ -188,6 +188,16 @@ The repository is organized into stable, purpose-specific areas:
 - **`docs/`** — lab architecture and repository-organization notes.
 
 The component files under `components/` are repository-managed copies of the files shared from the running lab. Deployment scripts on the VMs may still reference their existing local paths; copying a file into this repository does not deploy it to a VM or update its launch scripts.
+
+## 📦 VM component packages and deployment guides
+
+The actual source files shared from the lab are kept in separate, clearly named folders:
+
+- [`components/ubuntu-forwarder/`](components/ubuntu-forwarder/README.md) — `wazuh_live_forwarder_v3.py`, which tails Wazuh alerts and forwards selected raw events.
+- [`components/windows-defensive-agent/`](components/windows-defensive-agent/README.md) — `smartsoc_defensive_agent_v2.py`, whose embedded agent identifier is v3 HMAC.
+- [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) — host/Ubuntu/victim deployment order and checks.
+
+These are source-controlled copies. Publishing them does not remotely install, restart, or configure anything on the VMs. Follow each component guide and verify the endpoint addresses and safety gates locally.
 
 ## 🚦 Integration caveats to resolve
 
@@ -205,7 +215,7 @@ Before a live demonstration, explicitly choose the intended receiver generation 
 
 ### Defensive-agent audit path mismatch
 
-- The supplied defensive-agent source writes `logs/smartsoc_defensive_agent_v3_audit.jsonl` relative to the agent script directory.
+- The supplied defensive-agent source declares internal agent version v3 and writes `logs/smartsoc_defensive_agent_v3_audit.jsonl` relative to the script directory.
 - The checked-in `tools/live_demo/watch_victim_audit.ps1` attempts to stream `C:\SmartSOC-Agent-v2\logs\defensive_agent_v2_audit.jsonl`.
 
 Confirm the actual installed agent version and update the watcher separately if needed; this documentation-only change does not modify either file.

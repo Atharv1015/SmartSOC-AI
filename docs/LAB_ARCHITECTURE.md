@@ -51,3 +51,10 @@ Choose and verify the intended receiver and victim-agent versions before running
 ## Network security
 
 The described forwarder and agent calls use HTTP. HMAC-SHA256 can authenticate request contents and protect their integrity; it does not encrypt traffic. Keep ports `8787`, `8788`, and `8765` within an isolated and access-controlled lab network. Verify Windows Firewall rules and VM network isolation.
+
+
+## Component implementation guides
+
+- [Ubuntu Wazuh Forwarder v3](../components/ubuntu-forwarder/README.md): deployment, start/stop, log inspection, troubleshooting, and receiver mismatch notes.
+- [Windows Defensive Agent](../components/windows-defensive-agent/README.md): safe deployment, local health validation, authentication controls, audit path, and execution-gate guidance.
+- [Cross-component deployment order](DEPLOYMENT_GUIDE.md): staged rollout and verification checklist.
