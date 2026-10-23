@@ -1,210 +1,334 @@
-﻿<div align="center">
+<div align="center">
 
 # 🛡️ SmartSOC-AI
 
-### AI-Assisted Security Operations Center Automation
+### AI-Assisted Security Operations & Controlled Endpoint Response
 
-**From security telemetry to evidence-driven decisions and controlled defensive response.**
+**A lab-focused SOC automation project connecting Wazuh telemetry, ML-assisted analysis, response policy, and an auditable Windows defensive agent.**
 
 <p>
-  <img src="https://img.shields.io/badge/Domain-Cybersecurity-0D9488?style=for-the-badge" alt="Cybersecurity"/>
-  <img src="https://img.shields.io/badge/AI-ML%20Assisted-6366F1?style=for-the-badge" alt="AI and machine learning"/>
-  <img src="https://img.shields.io/badge/Integration-Wazuh-2563EB?style=for-the-badge" alt="Wazuh integration"/>
-  <img src="https://img.shields.io/badge/Environment-Controlled%20Lab-orange?style=for-the-badge" alt="Controlled lab"/>
+  <a href="https://github.com/Atharv1015/SmartSOC-AI"><img src="https://img.shields.io/badge/GitHub-SmartSOC--AI-181717?style=for-the-badge&logo=github" alt="GitHub repository"></a>
+  <img src="https://img.shields.io/badge/Telemetry-Wazuh-2563EB?style=for-the-badge" alt="Wazuh telemetry">
+  <img src="https://img.shields.io/badge/Analysis-ML%20assisted-6657C8?style=for-the-badge" alt="ML assisted analysis">
+  <img src="https://img.shields.io/badge/Response-Policy%20controlled-0F766E?style=for-the-badge" alt="Policy controlled response">
+  <img src="https://img.shields.io/badge/Stage-Research%20%26%20development-D97706?style=for-the-badge" alt="Research and development">
 </p>
 
-*An engineering project exploring how AI-assisted analysis and policy-controlled automation can support defensive security operations.*
+[Architecture](#-lab-architecture) · [Workflow](#-event-to-response-workflow) · [Components](#-core-components) · [Setup](#-getting-started) · [Safety](#-security-model--safety)
 
 </div>
 
 ---
 
-## 📌 Overview
+## 🔎 Project overview
 
-SmartSOC-AI is a research and development project that brings together security-event ingestion, machine-learning inference, risk assessment, response-policy evaluation, authorization controls, and a defensive mitigation interface.
+**SmartSOC-AI** explores how a Security Operations Center workflow can combine endpoint telemetry, machine-learning-assisted event analysis, risk scoring, response decision logic, authorization boundaries, and controlled endpoint actions.
 
-The goal is to explore a structured SOC workflow in which security signals are analyzed, response decisions are evaluated against explicit policies, and supported actions can be carried out in a controlled lab.
+The lab is built around a simple principle: **a detection or model prediction is not, by itself, permission to take action**. Events should be interpreted in context, response policy should be evaluated, and endpoint actions should be restricted, authenticated, and auditable.
 
-> **Project status:** Research and development. The presence of individual modules does not establish that every integration works end to end. Validate the required components and tests before relying on the workflow.
+### Objectives
 
-## ✨ Key Capabilities
+- Receive selected Windows endpoint alerts through Wazuh.
+- Forward relevant raw alerts from the Ubuntu server to the SmartSOC host.
+- Run the selected inference, reasoning, risk, and response-policy components.
+- Keep endpoint execution behind separate policy and agent-side validation checks.
+- Record decisions and endpoint outcomes for inspection and testing.
+- Support repeatable defensive experiments in an isolated, authorized lab.
 
-| Capability | Purpose |
-|---|---|
-| **Security-event integration** | Connects security telemetry with Python-based processing workflows. |
-| **ML-assisted analysis** | Provides inference components for supported Windows/APT-oriented features. |
-| **Risk and decision policy** | Separates risk assessment and response planning from action execution. |
-| **Authorization controls** | Provides components for validating whether a proposed action is permitted. |
-| **Defensive-agent integration** | Includes adapters and clients for communicating with a lab mitigation agent. |
-| **Testing and diagnostics** | Includes automated tests and tools for examining integration and policy behavior. |
-| **Controlled response** | Supports a safety-oriented workflow where execution depends on configuration and authorization. |
+> [!IMPORTANT]
+> **Status: research and development.** This repository contains multiple generations of receivers, policies, and adapters. Their presence does not prove that every path is connected or that a complete end-to-end scenario has passed. Review the integration notes before following the demo scripts.
 
-*Feature descriptions reflect the repository structure; validate individual behaviors before describing them as verified.*
+## 🧭 Lab at a glance
 
-## 🏗️ Architecture
+The supplied code identifies **one SmartSOC Windows host and two lab VMs**. This is the topology documented by the available files, not a claim that the full environment contains no additional VMs or services.
 
-The intended high-level workflow is illustrated below.
+| Node | Address shown in project files | Role | Main responsibilities |
+|---|---|---|---|
+| **SmartSOC controller host** | `192.168.56.1` | Windows host/workstation | Hosts the repository, Python receivers, inference and decision code, response adapter, launchers, tests, and operator consoles. The files do not establish that this node is itself a VM. |
+| **Ubuntu Wazuh / forwarder VM** | `192.168.56.101` | Telemetry source and forwarder | Wazuh manager writes alerts to `/var/ossec/logs/alerts/alerts.json`; `wazuh_live_forwarder_v3.py` tails new entries and forwards selected raw alerts. |
+| **Windows victim VM** | `192.168.56.102` | Monitored endpoint / defensive-agent host | Runs the Windows telemetry stack and the defensive-agent HTTP service; the agent validates requests, restricts target processes, records audits, and verifies process state after an action. |
 
-`mermaid
-flowchart TD
-    A["Wazuh Security Events"] --> B["Python Event Receiver"]
-    B --> C["Feature Processing"]
-    C --> D["ML Inference"]
-    D --> E["Risk Assessment"]
-    E --> F["Response Decision Policy"]
-    F --> G{"Authorization and Execution Gates"}
-    G -->|Denied| H["Reject or Record Decision"]
-    G -->|Approved in Lab| I["Mitigation Adapter"]
-    I --> J["Defensive Agent"]
-    J --> K["Action Verification and Audit"]
-`
+The `192.168.56.x` addresses are hard-coded in the supplied scripts. They appear consistent with a private lab network, but the active virtual network mode and complete VM inventory must be confirmed on the host before running the system.
 
-**Design principle:** A model prediction is not, by itself, permission to execute a response. Policy checks, authorization, target validation, and outcome verification remain important boundaries.
+## 🏗️ Lab architecture
 
-## 🔄 Operational Workflow
+```mermaid
+flowchart TB
+    subgraph VICTIM["Windows Victim VM · 192.168.56.102"]
+        WIN["Windows / Sysmon events"]
+        AGENT["SmartSOC Defensive Agent"]
+        AUDIT["JSONL audit log"]
+        WIN --> AGENT
+        AGENT --> AUDIT
+    end
 
-1. **Ingest** — receive security events from the configured telemetry source.
-2. **Analyze** — process supported event features and run the relevant inference component.
-3. **Assess** — evaluate risk and response eligibility.
-4. **Authorize** — apply execution-policy and authorization checks.
-5. **Respond** — communicate with the defensive agent for supported, explicitly permitted lab actions.
-6. **Verify** — inspect the response outcome and available audit evidence.
+    subgraph UBUNTU["Ubuntu Wazuh VM · 192.168.56.101"]
+        WAZUH["Wazuh Manager"]
+        ALERTS["alerts.json"]
+        FWD["Wazuh Live Forwarder v3"]
+        WAZUH --> ALERTS --> FWD
+    end
 
-The exact workflow depends on the selected entry point and local configuration.
+    subgraph HOST["SmartSOC Windows host · 192.168.56.1"]
+        RX["HTTP event receiver"]
+        INF["Feature processing / ML inference"]
+        DEC["Reasoning · risk · decision policy"]
+        GATE{"Execution policy / gates"}
+        ADAPTER["Authenticated mitigation adapter"]
+        LOG["Receiver / decision logs"]
+        RX --> INF --> DEC --> GATE
+        GATE -->|Denied / held| LOG
+        GATE -->|Permitted lab request| ADAPTER
+    end
 
-## 🧩 Codebase Map
+    WIN -->|Events| WAZUH
+    FWD -->|Raw alert POST · HTTP| RX
+    ADAPTER -->|HMAC-signed request · HTTP| AGENT
+    AGENT -->|Result / verification| ADAPTER
+```
+
+The diagram represents the intended system-level data flow assembled from the available code. It is not proof that the current launch scripts use a matching receiver/forwarder version or that every link has been validated in the live lab.
+
+### Network endpoints found in source
+
+| Link | Configured endpoint | Purpose |
+|---|---|---|
+| Ubuntu forwarder v3 → SmartSOC host | `http://192.168.56.1:8787/wazuh-event` | POST raw Wazuh alerts in an `{"event": ...}` envelope. |
+| SmartSOC adapter/client → victim agent | `192.168.56.102:8765` | Send structured health or mitigation requests. |
+| Defensive-agent listener | `0.0.0.0:8765` | Provides `GET /health` and `POST /mitigate`. The listener binds all interfaces on the victim; firewall/network isolation matters. |
+| SmartSOC host → Ubuntu | SSH to `smartsoc@192.168.56.101` | Starts the forwarder through the checked-in launcher. |
+| SmartSOC host → victim | SSH to `vboxuser@192.168.56.102` | The current audit watcher attempts to stream an agent audit file. |
+
+**Transport security:** the supplied forwarder and defensive-agent client use HTTP, not TLS. HMAC authentication can authenticate a signed request and detect payload tampering, but it does not encrypt traffic. Restrict these endpoints to the isolated lab network; do not expose them directly to the Internet or an untrusted network.
+
+## 🔁 Event-to-response workflow
+
+### 1. Wazuh collection and forwarding — Ubuntu
+
+The supplied `wazuh_live_forwarder_v3.py`:
+
+- Tails `/var/ossec/logs/alerts/alerts.json` and begins at the current end of file; it does not replay historical alerts at startup.
+- Filters alerts by Wazuh agent ID `001` **or** name `SmartSOC-Windows-Victim`.
+- Forwards alerts whose rule IDs are in a configured allowlist.
+- Keeps a bounded, in-memory set of recent alert IDs to skip duplicates.
+- POSTs the original Wazuh alert and retries delivery up to three times.
+- Writes UTC-timestamped activity to `~/smartsoc-forwarder-v3/logs/forwarder_v3.log`.
+
+The forwarder transports telemetry. It does not execute endpoint commands, terminate processes, or contain hosts.
+
+### 2. Analysis and response planning — SmartSOC host
+
+The repository includes several layers, with the exact execution sequence dependent on which receiver/entry point is launched:
+
+1. Event parsing and feature preparation.
+2. Windows/APT-oriented ML inference.
+3. Autonomous reasoning and risk assessment.
+4. Decision policy and response planning.
+5. Authorization/execution policy checks.
+6. Mitigation adapter call, where the selected path and configuration permit it.
+
+Multiple v1/v2 and candidate/historical modules coexist. Do not assume similarly named modules are interchangeable; validate the imports and runtime configuration for the intended entry point.
+
+### 3. Defensive enforcement — Windows victim
+
+The supplied defensive-agent file is versioned at `components/windows-defensive-agent/smartsoc_defensive_agent_v3.py`. The running VM may still use `C:\SmartSOC-Agent-v2\smartsoc_defensive_agent_v2.py`; the repository copy does not change that deployed path. The file describes a narrowly scoped endpoint service:
+
+- Routes: `GET /health` and `POST /mitigate`.
+- Supported action: `PROCESS_TERMINATION` only.
+- Allowed process names: `notepad.exe` and `ping.exe`.
+- Protected process names are explicitly denied.
+- Client IP must be in the configured allowlist (`192.168.56.1`, loopback addresses).
+- Requests require HMAC-SHA256 using the timestamp, nonce, and exact body in the signed message.
+- Timestamp skew is limited to 120 seconds, and seen nonces are stored in memory to reject replays.
+- Body length is capped at 16 KiB.
+- The agent checks that the requested PID exists and its live process identity matches the request.
+- It calls `taskkill` with an argument list and `shell=False`, then checks whether the process is still running.
+- Results and relevant errors are written to a JSONL audit log.
+
+A successful `/health` result is not evidence that a mitigation took place. The reported health state is separate from a verified action result.
+
+### 4. Audit and evidence
+
+The repository includes receiver diagnostics, a victim audit watcher, tests, and a separate manual evidence-collection bundle. The manual bundle is documented as separate from the live alert-to-response pipeline; do not describe it as automatic containment.
+
+## 🧩 Core components
 
 | Path | Responsibility |
 |---|---|
-| src/inference/ | Inference-related modules |
-| src/production_inference_windows_apt_v4_1.py | Windows/APT-oriented production-inference module |
-| src/decision/ | Analyst authorization, decision policy, risk and response planning |
-| src/risk/ | Risk-engine implementation |
-| src/integration/ | Receivers, Wazuh integration, approval and execution components |
-| src/integration_v2/ | Version 2 execution configuration and integration components |
-| src/autonomous_v2/ | Mitigation adapters and clients |
-| 	ests/ | Automated tests |
-| 	ools/live_demo/ | Live-demo and diagnostic scripts |
-| containment/ | Containment-related documentation and utilities |
+| `src/production_inference_windows_apt_v4_1.py` | Windows/APT-oriented inference module |
+| `src/inference/` and `src/inference_windows_apt_v4_1.py` | Inference implementations and related modules |
+| `src/decision/` | Risk engine, decision policy, response planner, analyst-authorization logic |
+| `src/risk/` | Risk-engine implementation |
+| `src/integration/` | Receiver generations, Wazuh integration, approval and execution-policy components |
+| `src/integration_v2/` | v2 execution configuration and authorization/dry-run bridges |
+| `src/autonomous/` | Earlier autonomous reasoning and mitigation-controller code |
+| `src/autonomous_v2/` | SmartSOC-side victim mitigation client and adapter |
+| `components/ubuntu-forwarder/` | Versioned Ubuntu/Wazuh forwarder source and deployment notes |
+| `components/windows-defensive-agent/` | Versioned Windows defensive-agent source and deployment notes |
+| `docs/` | Lab architecture, repository map, and operational notes |
+| `tests/` | Focused integration and unit tests |
+| `test_*.py` | Additional inference and feature-forensics scripts |
+| `tools/live_demo/` | Host-side receiver/forwarder launchers, audit watcher, and demo utilities |
+| `manual_live_response_bundle/` | Separate manual evidence-collection helper |
+| `containment/` | Evidence-staging documentation and placeholders |
+| `data/integration/` | Selected integration event samples |
+| `data/final/` | Dataset manifest metadata |
 
-## 🔐 Security and Safety
+## 🗂️ Repository organization
 
-SmartSOC-AI is intended for authorized defensive testing in isolated or otherwise controlled environments.
+The repository is organized into stable, purpose-specific areas:
 
-- Keep credentials, API tokens, private keys, and local secret files out of source control.
-- Begin with dry-run or simulation workflows wherever available.
-- Do not enable mitigation on a system unless the target and action are explicitly authorized.
-- Validate event input, target identity, authorization decisions, and execution outcomes.
-- Preserve endpoint protection and other host security controls.
-- Keep logs and test evidence free of secrets and sensitive personal or operational data.
-- Review every response path before connecting it to a real environment.
+- **`src/`** — SmartSOC inference, risk, decision, integration, and response-adapter code.
+- **`components/ubuntu-forwarder/`** — the supplied Ubuntu Wazuh Forwarder v3 source and its deployment notes.
+- **`components/windows-defensive-agent/`** — the supplied Windows defensive-agent v3 source and its deployment notes.
+- **`tests/`** — maintained component/integration tests. Root-level `test_*.py` files are retained for now because some legacy scripts may depend on project-root-relative paths.
+- **`tools/`** — launchers, diagnostics, demo workflows, and utilities. Historical top-level patch scripts are intentionally left in place during this pass because several resolve project paths relative to their own location; moving them without refactoring and testing their path handling could break their behavior.
+- **`data/`** — selected event samples and manifest metadata. Large datasets and model binaries are excluded by `.gitignore`.
+- **`manual_live_response_bundle/` and `containment/`** — separate evidence-related tooling and documentation; these are not automatically part of the active alert pipeline.
+- **`docs/`** — lab architecture and repository-organization notes.
 
-**Important:** Dry-run behavior, replay protection, HMAC verification, process identity checks, and post-action verification should only be claimed as operational for a specific workflow after the relevant implementation and tests have been inspected.
+The component files under `components/` are repository-managed copies of the files shared from the running lab. Deployment scripts on the VMs may still reference their existing local paths; copying a file into this repository does not deploy it to a VM or update its launch scripts.
 
-## 🚀 Getting Started
+## 🚦 Integration caveats to resolve
+
+> [!WARNING]
+> These are version/configuration mismatches visible in the supplied repository files. They are documented here, not automatically changed by this README.
+
+### Receiver port and route mismatch
+
+- The supplied Ubuntu **forwarder v3** sends to `http://192.168.56.1:8787/wazuh-event`.
+- `src/integration/smartsoc_live_receiver_v2.py` is configured for port `8787`.
+- `tools/live_demo/run_receiver.ps1` instead launches `src/integration/smartsoc_receiver_v1.py` and prints an endpoint on port `8788` with `LOG_ONLY` behavior.
+- `tools/live_demo/Start-SmartSOC-LiveDemo.ps1` checks port `8788` before launching its tabs.
+
+Before a live demonstration, explicitly choose the intended receiver generation and make the health check, route, port, and forwarding destination agree. The README does not assume which receiver you intend to standardize on.
+
+### Defensive-agent audit path mismatch
+
+- The supplied defensive-agent source writes `logs/smartsoc_defensive_agent_v3_audit.jsonl` relative to the agent script directory.
+- The checked-in `tools/live_demo/watch_victim_audit.ps1` attempts to stream `C:\SmartSOC-Agent-v2\logs\defensive_agent_v2_audit.jsonl`.
+
+Confirm the actual installed agent version and update the watcher separately if needed; this documentation-only change does not modify either file.
+
+### Additional operational limitations
+
+- Forwarder duplicate suppression is in memory and resets when the forwarder restarts.
+- Delivery retries are bounded; failed alerts are eventually abandoned and there is no durable retry queue in the supplied forwarder.
+- Some host paths, usernames, addresses, ports, and policy values are hard-coded in scripts.
+- Process termination is not network-level containment and cannot undo activity that happened before termination.
+- Full end-to-end behavior and the complete test suite are not claimed as verified here.
+
+## 🚀 Getting started
 
 ### Prerequisites
 
-Requirements depend on the component being tested. The project includes Python modules, PowerShell utilities, and integration components that may depend on external lab services.
+Requirements vary by component. The forwarder and supplied defensive agent mainly use Python standard-library modules; inference, evaluation, and test workflows may require third-party dependencies and model/data artifacts.
 
-You may need:
-
-- A compatible Python installation
-- PowerShell on Windows for the Windows-specific utilities
-- A configured Wazuh lab, if testing event integration
-- An isolated Windows test host for defensive-agent experiments
-- The dependencies required by the specific module
+- Windows SmartSOC host with Python and PowerShell.
+- Ubuntu VM with Wazuh writing `/var/ossec/logs/alerts/alerts.json`.
+- Windows victim VM with the intended endpoint telemetry and defensive-agent configuration.
+- Isolated lab networking and working SSH access to the configured nodes.
+- Correctly provisioned secrets set via environment variables, never committed to Git.
+- Dependencies required by the specific receiver/inference entry point.
 
 ### 1. Clone the repository
 
-After the repository has been published:
+```powershell
+git clone https://github.com/Atharv1015/SmartSOC-AI.git
+Set-Location SmartSOC-AI
+```
 
-`powershell
-git clone <YOUR-GITHUB-REPOSITORY-URL>
-cd SmartSOC-AI
-`
+### 2. Create a host-side Python environment
 
-Replace the placeholder with the actual repository URL.
-
-### 2. Create a virtual environment
-
-`powershell
-py -3.12 -m venv .venv
+```powershell
+py -3 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-`
+```
 
-Python 3.12 is an example based on the development environment. Confirm compatibility for the component you intend to run.
+A complete, tested root dependency manifest has not yet been established. Select a component first and check its imports and instructions before installing dependencies.
 
-### 3. Install component dependencies
+### 3. Verify the Ubuntu forwarder prerequisites
 
-A complete root-level dependency manifest has not yet been established. Inspect the selected module's imports and documentation before installing its required packages.
+On Ubuntu, verify Python and readability of the Wazuh alert stream:
 
-Do not install an arbitrary collection of packages or assume that one dependency list covers every subsystem.
+```bash
+python3 --version
+test -r /var/ossec/logs/alerts/alerts.json && echo "Wazuh alert file is readable"
+```
 
-### 4. Run tests
+The source is versioned at `components/ubuntu-forwarder/wazuh_live_forwarder_v3.py`. The current Windows launcher still expects a deployed copy under `~/smartsoc-forwarder-v3` and runs `python3 -u wazuh_live_forwarder_v3.py` there. Keep the VM deployment and repository copy in sync, or revise the launcher in a separate, tested change.
 
-If the required test dependencies are installed:
+### 4. Configure the defensive agent safely
 
-`powershell
+The agent expects a shared `SMARTSOC_AGENT_SECRET` of at least 32 characters and the `SMARTSOC_ALLOW_TERMINATION=1` environment gate for POST execution. Provision secrets separately on the intended endpoints; never paste them into source files, README content, Git history, screenshots, or chat.
+
+Keep live termination disabled during installation and initial validation. Review the agent IP allowlist, target process allowlist, and effective SmartSOC execution policy before any action-enabled test.
+
+### 5. Run relevant tests
+
+After installing the required test dependencies, this is a starting point for the focused test directory:
+
+```powershell
 python -m pytest tests
-`
+```
 
-This is a suggested command, not a claim that all tests currently pass. Review failures and environment-specific requirements before proceeding.
+This is a suggested command, not a statement that the tests currently pass. Record the actual command, environment, and pass/fail results when validating a clean installation.
 
-### 5. Configure a lab demo
+## 🔐 Security model and safety
 
-Review the scripts under 	ools/live_demo/ before running them. Configure local endpoints and credentials outside version control, and begin with non-destructive tests.
+SmartSOC-AI is intended for authorized defensive testing in an isolated lab.
 
-Do not enable live response on a production system as part of initial setup.
+1. Verify VM identity, addresses, target agent ID, network mode, and receiver route before testing.
+2. Start with read-only or dry-run workflows and confirm that the endpoint remains unchanged.
+3. Inspect the exact policy imported by the selected receiver; do not infer runtime safety from a filename or README.
+4. Preserve Windows endpoint protection; never add protected OS/security processes to the allowlist.
+5. Test rejected signatures, stale timestamps, replayed nonces, unexpected clients, invalid PIDs, and mismatched process names.
+6. Review audit records and sanitize logs before sharing them.
+7. Keep the HTTP services bound to an isolated, access-controlled lab network.
+8. Keep tokens, keys, shared secrets, raw private alerts, personal data, and sensitive operational details out of the public repository.
 
-## 🧪 Validation and Evidence
+> [!CAUTION]
+> The committed `src/integration_v2/execution_config_v2.py` currently sets `DRY_RUN = False` alongside controlled-lab execution flags. The supplied Windows agent also has a separate `SMARTSOC_ALLOW_TERMINATION` gate and shared-secret requirement. One checked-in receiver version also contains the literal placeholder `SMARTSOC-LAB-V1-CHANGE-ME`; do not treat that value as a valid shared secret. This README update does not change any settings or code. Review the effective configuration and provision secrets outside Git before any action-enabled test.
 
-A credible security project should distinguish code availability from verified behavior.
+## ✅ Validation checklist
 
-Before claiming a successful end-to-end demonstration, record:
+Use this as a record of work to complete; unchecked items are not claimed to be done.
 
-- Test command and pass/fail summary
-- Component versions and environment
-- Event-ingestion evidence
-- Inference and decision output
-- Authorization outcome
-- Mitigation result, where explicitly authorized
-- Relevant sanitized audit evidence
-
-No test-pass percentage, detection accuracy, latency figure, or production-readiness claim is asserted by this README.
+- [ ] Confirm VM inventory, operating systems, addresses, and network mode.
+- [ ] Confirm Wazuh agent identity and expected rule IDs.
+- [ ] Pair the intended receiver version, route, and port with forwarder v3.
+- [ ] Align the audit watcher with the installed defensive-agent version.
+- [ ] Validate receiver health and event ingestion using benign test events.
+- [ ] Verify invalid HMAC, stale timestamps, repeated nonces, and disallowed clients are rejected.
+- [ ] Verify non-allowlisted and protected processes are rejected.
+- [ ] Verify dry-run testing causes no endpoint change.
+- [ ] Confirm audit records and sanitize any evidence for publication.
+- [ ] Run the appropriate test set and record the real result.
+- [ ] Review dataset/code licensing and the complete public-release diff.
 
 ## 🛣️ Roadmap
 
-- [ ] Establish a clean root dependency manifest
-- [ ] Document configuration with safe example values
-- [ ] Validate tests in a clean environment
-- [ ] Document component-level setup and troubleshooting
-- [ ] Add sanitized architecture and demo evidence
-- [ ] Review dataset and third-party asset licenses
-- [ ] Complete a source and secret review before public release
-- [ ] Document verified end-to-end behavior and known limitations
+- [ ] Publish the complete VM inventory and verified network diagram.
+- [ ] Select and document the supported receiver/forwarder version pairing.
+- [ ] Align the victim audit watcher with the installed agent version.
+- [ ] Add tested dependency manifests and per-component setup instructions.
+- [ ] Capture reproducible test results and sanitized demo evidence.
+- [ ] Review licenses for the code and datasets.
+- [ ] Complete a repository-wide security and privacy review.
 
-## ⚠️ Limitations
+## 🤝 Contributing
 
-- The full workflow may depend on separately configured services and hosts.
-- Model performance depends on feature compatibility, data quality, and evaluation methodology.
-- A local process action is not equivalent to network-level containment.
-- Detection of a security event does not automatically justify an enforcement action.
-- Research and development status does not imply production readiness or security certification.
-
-## 🤝 Contributions
-
-Contributions should include a clear description, relevant tests, and any security implications. Never submit credentials, private logs, proprietary datasets, or information about unauthorized targets.
+Contributions should include a clear problem statement, reproduction steps, test output, and any security implications. Do not submit credentials, private alerts, customer data, proprietary datasets, or information about systems you are not authorized to test.
 
 ## 📄 License
 
-**License not yet specified.** Until a license is selected and added, do not assume that others have permission to reuse, modify, or redistribute this project.
+No license is currently specified. Until a license is added, do not assume this project is licensed for reuse, modification, or redistribution.
 
 ---
 
 <div align="center">
 
-**SmartSOC-AI** · Defensive Security Research · Controlled Lab Automation
+**SmartSOC-AI** · Defensive Security Engineering · Controlled Lab Research
 
 </div>
