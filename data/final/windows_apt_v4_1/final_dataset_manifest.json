@@ -1,0 +1,187 @@
+{
+  "dataset_name": "windows_apt_v4_1_final",
+  "status": "FROZEN_COPY_OF_VALIDATED_V4_1",
+  "source_directory": "C:\\Users\\Atharv\\SmartSOC-AI\\data\\processed\\windows_apt_v4_1",
+  "final_directory": "C:\\Users\\Atharv\\SmartSOC-AI\\data\\final\\windows_apt_v4_1",
+  "rows": {
+    "train": 18677,
+    "test": 11707,
+    "total": 30384
+  },
+  "structured_features": 62,
+  "numeric_feature_count": 58,
+  "categorical_feature_count": 4,
+  "tfidf_feature_count": 6699,
+  "final_model_feature_count": 6919,
+  "mitre_technique_count": 45,
+  "mitre_techniques": [
+    "T1003.001",
+    "T1003.002",
+    "T1021.006",
+    "T1027",
+    "T1027.004",
+    "T1036",
+    "T1047",
+    "T1053.005",
+    "T1055",
+    "T1059",
+    "T1059.001",
+    "T1059.003",
+    "T1059.005",
+    "T1070",
+    "T1070.004",
+    "T1078",
+    "T1087",
+    "T1095",
+    "T1098",
+    "T1105",
+    "T1110",
+    "T1110.001",
+    "T1112",
+    "T1136",
+    "T1210",
+    "T1218",
+    "T1484",
+    "T1485",
+    "T1489",
+    "T1529",
+    "T1531",
+    "T1543.003",
+    "T1546",
+    "T1546.003",
+    "T1546.011",
+    "T1547.001",
+    "T1548",
+    "T1548.002",
+    "T1562.001",
+    "T1562.004",
+    "T1565.001",
+    "T1570",
+    "T1574.001",
+    "T1574.002",
+    "T1574.010"
+  ],
+  "constant_training_features": [
+    "is_system_user",
+    "is_admin_user",
+    "uses_certutil"
+  ],
+  "duplicate_audit": {
+    "repeated_train_rows": 14,
+    "repeated_test_rows": 8925,
+    "cross_split_identical_representations": 233,
+    "cross_split_same_label": 230,
+    "cross_split_label_conflicts": 3,
+    "train_ambiguous_representations": 3,
+    "test_ambiguous_representations": 1
+  },
+  "temporal": {
+    "train_latest": "2024-12-11 21:40:31.405000",
+    "test_earliest": "2024-12-12 00:01:25.615000",
+    "gap": "0 days 02:20:54.210000",
+    "separation_valid": true
+  },
+  "behavior_text": {
+    "train_missing": 31,
+    "test_missing": 4049,
+    "train_empty": 31,
+    "test_empty": 4049
+  },
+  "source_sha256": {
+    "structured_train.csv": "a3e3a503902a666fb0cc3e2be166557f83f4ef40c4c0e82d3964eeabff7f0fb9",
+    "structured_test.csv": "7bda66c67d1108d749048bd0fe24186996ce28aea7c737cb36110c49c0818c71",
+    "labels_train.csv": "6ecb3f66216f7fe6a4627f975a27e9cdf46019a5d31368e827cf9a3ef0506dec",
+    "labels_test.csv": "f6e6dcc1427bb34db8a0ae1c3ea75990973660f58199ab2693fadf1f9e18d5b2",
+    "metadata_train.csv": "619a72bcbd8dec10f4759829c3ef560a113a1c078ad6313e26afc9e2b3864815",
+    "metadata_test.csv": "815bfb64bcf7993645fe00a41388fdab1cc63d1905b181ea75afbeec50803058",
+    "behavior_text_train.csv": "64aea263e75995720551b009b73e02305c8e5264e96c3da1106c0a9142af95ff",
+    "behavior_text_test.csv": "0ab32bed87c91ae24deb80de3ed7f769474930dd4d5c051e107547875c5a2f66"
+  },
+  "final_sha256": {
+    "structured_train.csv": "a3e3a503902a666fb0cc3e2be166557f83f4ef40c4c0e82d3964eeabff7f0fb9",
+    "structured_test.csv": "7bda66c67d1108d749048bd0fe24186996ce28aea7c737cb36110c49c0818c71",
+    "labels_train.csv": "6ecb3f66216f7fe6a4627f975a27e9cdf46019a5d31368e827cf9a3ef0506dec",
+    "labels_test.csv": "f6e6dcc1427bb34db8a0ae1c3ea75990973660f58199ab2693fadf1f9e18d5b2",
+    "metadata_train.csv": "619a72bcbd8dec10f4759829c3ef560a113a1c078ad6313e26afc9e2b3864815",
+    "metadata_test.csv": "815bfb64bcf7993645fe00a41388fdab1cc63d1905b181ea75afbeec50803058",
+    "behavior_text_train.csv": "64aea263e75995720551b009b73e02305c8e5264e96c3da1106c0a9142af95ff",
+    "behavior_text_test.csv": "0ab32bed87c91ae24deb80de3ed7f769474930dd4d5c051e107547875c5a2f66"
+  },
+  "lineage_preserved": true,
+  "production_lineage_policy": {
+    "source_modified": false,
+    "rows_deleted": false,
+    "labels_modified": false,
+    "features_modified": false,
+    "train_test_membership_modified": false,
+    "model_modified": false,
+    "thresholds_modified": false,
+    "retraining_performed": false
+  },
+  "review_items": [
+    {
+      "issue": "constant_training_features",
+      "count": 3,
+      "action": "document_only_no_deletion",
+      "details": "is_system_user|is_admin_user|uses_certutil"
+    },
+    {
+      "issue": "repeated_train_representations",
+      "count": 14,
+      "action": "document_only_no_deletion",
+      "details": "Repeated full representations are not automatically leakage."
+    },
+    {
+      "issue": "repeated_test_representations",
+      "count": 8925,
+      "action": "document_only_no_deletion",
+      "details": "Repeated full representations are not automatically leakage."
+    },
+    {
+      "issue": "cross_split_identical_representations",
+      "count": 233,
+      "action": "review_classification_required",
+      "details": "Classify identical cross-split representations by label consistency."
+    },
+    {
+      "issue": "cross_split_label_conflicts",
+      "count": 3,
+      "action": "review_required",
+      "details": "Identical full representations carry different labels across splits."
+    },
+    {
+      "issue": "train_label_ambiguity",
+      "count": 3,
+      "action": "document_only_no_deletion",
+      "details": "14 affected rows."
+    },
+    {
+      "issue": "test_label_ambiguity",
+      "count": 1,
+      "action": "document_only_no_deletion",
+      "details": "1505 affected rows."
+    },
+    {
+      "issue": "missing_behavior_text",
+      "count": 4080,
+      "action": "document_only_no_deletion",
+      "details": "Existing production pipeline handles missing text representation."
+    }
+  ],
+  "quality_checks": {
+    "source_files_present": true,
+    "train_alignment": true,
+    "test_alignment": true,
+    "expected_train_rows": true,
+    "expected_test_rows": true,
+    "structured_features_62": true,
+    "train_test_schema_match": true,
+    "required_columns_present": true,
+    "numeric_values_valid": true,
+    "technique_count_45": true,
+    "timestamps_valid": true,
+    "temporal_separation_valid": true,
+    "final_copy_hash_match": true
+  },
+  "decision": "PASS_WITH_DOCUMENTED_LIMITATIONS"
+}

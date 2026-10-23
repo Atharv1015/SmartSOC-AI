@@ -1,0 +1,128 @@
+﻿# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+.venv/
+.venv-*/
+env/
+
+# Secrets and local configuration
+.secrets/
+.env
+.env.*
+!.env.example
+*.token
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Logs, temporary files, and backups
+logs/
+*.log
+*.bak
+*.tmp
+backups/
+
+# Large generated outputs
+reports/
+results/
+experiments/
+final_snapshot_*/
+pipeline_info.txt
+risk_engine_source.txt
+
+# Datasets and trained model artifacts
+data/raw/
+data/processed/
+models/
+*.joblib
+*.pkl
+*.pickle
+*.onnx
+
+# Archives and generated bundles
+*.zip
+
+# Local IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Additional generated and historical project material
+**/__pycache__/
+**/.pytest_cache/
+**/venv/
+**/.venv/
+**/.venv-*/
+**/backups/
+**/final_snapshot_*/
+**/reports/
+**/results/
+**/experiments/
+
+# Dataset and model files, regardless of location
+*.csv
+*.parquet
+*.feather
+*.joblib
+*.pkl
+*.pickle
+*.onnx
+*.pt
+*.pth
+*.safetensors
+
+# Local logs and audit output
+*.log
+*.jsonl
+
+# Patch bundles and nested project copies
+SmartSOC-10-Scenario-Process-Policy-Patch-v2/
+SmartSOC-Policy-Reporting-v1/
+SmartSOC-ProcessTermination-Patch-v1/
+SmartSOC-AI/
+*.zip
+
+# Local secret material
+*.token
+*.pem
+*.key
+
+# Historical backup copies - keep out of the published repository
+*.backup
+*.backup_*
+*.backup-*
+*.bak
+*.bak_*
+*.bak-*
+*.bak.*
+*.old
+*.syntax-backup
+*.corrupt-backup
+*.pre_*_backup
+
+# Additional historical copies and temporary artifacts
+*_BACKUP.py
+*_backup.py
+*_backup_*.py
+*.stage1-backup
+*.pre_rollback_*
+*.pre_live_mitigation_backup
+/python
+
+# Exclude all historical files with backup in the filename
+*backup*
+*BACKUP*
+
+*.bak2
+
+*.bak2
